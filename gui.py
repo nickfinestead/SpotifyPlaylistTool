@@ -1,7 +1,8 @@
 from tkinter import *
 class Gui:
     
-    def __init__(self):
+    def __init__(self, si):
+        self.spotifyInterface = si #SpotifyInterface object
         self.buttons = []
         self.root = Tk()
         self.root.title("Playlist Reorder Tool")
@@ -39,7 +40,7 @@ class Gui:
     def sort(self):
         bozo_frame = Frame(self.frame)
         bozo_frame.place(x=0,y=0)
-        Label(bozo_frame, text = "TBD").grid(row=1, column = 0, sticky = 'w')
+        #Label(bozo_frame, text = "TBD").grid(row=1, column = 0, sticky = 'w')
     def clear_pages(self, function):
         for frame in self.frame.winfo_children():
             frame.destroy()
