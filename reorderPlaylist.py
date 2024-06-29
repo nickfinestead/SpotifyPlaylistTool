@@ -22,6 +22,9 @@ import os
 
 class SpotifyInterface:
     def __init__(self):
+        if not os.path.exists(".env"):
+            print(f"ERROR: .env file is not found in the currently directory")
+            exit(1)
         load_dotenv()
         # Spotify API credentials
         self.client_id = os.getenv("client_id")
