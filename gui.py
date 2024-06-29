@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from threading import Thread
+import time
 
 
 class Gui:   
@@ -35,9 +36,12 @@ class Gui:
         bozo_frame.place(x=0,y=0)
         Label(bozo_frame, text = "Please enter your spotify username").grid(row=1, column = 0, sticky = 'w')
         username = Entry(bozo_frame, width = 40)
-        username.grid(column = 1, row = 1)
-        
-        submit_btn = Button(bozo_frame, text = "Submit", command = lambda:self.spotifyInterface.set_name(username.get().strip()))
+        username.grid(column = 1, row = 1, stick = 'w')
+        def do_processing():
+            self.spotifyInterface.set_name(username.get().strip())
+            self.playlists = self.spotifyInterface.get_playlists() # key is uri, value is name
+            
+        submit_btn = Button(bozo_frame, text = "Submit", command = lambda: Thread(target = do_processing).start())
         
             
         submit_btn.grid(column = 0, row = 2, sticky = 'w')
@@ -73,20 +77,19 @@ class Gui:
         playlist_dropdown = ttk.Combobox(bozo_frame,textvariable=playlist, values=list(self.playlists.values()), width = 40)
         playlist_dropdown.grid(row = 2, column = 0, sticky = 'w')
         def get_playlists():
-            self.playlists = self.spotifyInterface.get_playlists() # key is uri, value is name
-            try:
-                playlist_dropdown['values'] = list(self.playlists.values())
-            except:
-                pass
+            while len(playlist_dropdown['values']) == 0:
+                try:
+                    playlist_dropdown['values'] = list(self.playlists.values())
+                except:
+                    pass
         t = Thread(target = get_playlists)
         t.start()
-        
+        # TODO: Figure out why bug with running sort twice
         def get_key(val, dict):
             for (key, value) in dict.items():
                 if val == value:
                     return key
-        t = Thread(target = lambda: (self.spotifyInterface.set_playlist(get_key(playlist.get(),self.playlists)),self.spotifyInterface.insert_playlist()))
-        sort_btn = Button(bozo_frame, text = "Sort", width = 30, command = lambda: t.start() )
+        sort_btn = Button(bozo_frame, text = "Sort", width = 30, command = lambda: Thread(target = lambda: (self.spotifyInterface.set_playlist(get_key(playlist.get(),self.playlists)),self.spotifyInterface.insert_playlist())).start() )
         sort_btn.grid(row = 3, column = 0, sticky = 'w')
     
     def clear_pages(self, function):

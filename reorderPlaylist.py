@@ -26,12 +26,11 @@ class SpotifyInterface:
         # Spotify API credentials
         self.client_id = os.getenv("client_id")
         self.client_secret = os.getenv("client_secret")
-        self.redirect_uri = os.getenv("redirect_uri")
         self.scope = 'playlist-read-private playlist-modify-private'
         # Authenticate with Spotify
         self.sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.client_id,
                                                     client_secret=self.client_secret,
-                                                    redirect_uri=self.redirect_uri,
+                                                    redirect_uri='http://localhost:8080/',
                                                     scope=self.scope))
         
         # Get the playlist ID of the playlist you want to reorder
@@ -58,7 +57,7 @@ class SpotifyInterface:
                 break
         for i in playlists:
             try:
-                if i['owner']['display_name'] == "bmxnic":
+                if i['owner']['display_name'] == self.name or self.name in i['owner']['uri']:
                     f"{i['name']}"
                     return_list[i['uri'].split(':')[2]] = i['name']
             except:
