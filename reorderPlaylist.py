@@ -38,7 +38,11 @@ class SpotifyInterface:
         self.playlist_id = ""
         self.name = ""
 
-
+    def set_name(self, name):
+        self.name = name
+    
+    def set_playlist(self, id):
+        self.playlist_id = id
     def get_playlists(self):
         if self.name == "":
             return
@@ -98,27 +102,22 @@ class SpotifyInterface:
             sorted_res.extend(sorted_group)
         return sorted_res
     
-    def insert_playlist(self, track_uris, sorted_track_uris):
+    def insert_playlist(self):
         i = 0
-        while sorted_track_uris:
+        songs = self.get_tracks()
+        song_uris = [song['track']['uri'].split(':')[2] for song in songs]
+        sorted_songs = self.sort_tracks(songs)
+        sorted_songs_uris = [song['track']['uri'].split(':')[2] for song in sorted_songs]
+        while sorted_songs_uris:
             
-            song = sorted_track_uris.pop(0)
-            song_start_pos = track_uris.index(song)
+            song = sorted_songs_uris.pop(0)
+            song_start_pos = song_uris.index(song)
             
             #print(f"i: {i}  Start_pos: {song_start_pos} Song URI: {song} Results Song URI: {tracks[song_start_pos]} ")
-            sp.playlist_reorder_items(playlist_id, range_start=song_start_pos, insert_before=i)
-            tracks.remove(song)
-            tracks.insert(i,song)
+            self.sp.playlist_reorder_items(self.playlist_id, range_start=song_start_pos, insert_before=i)
+            song_uris.remove(song)
+            song_uris.insert(i,song)
             i = i+1
         print(f"Finished processing {i} songs, have a nice day.")
-        
 
-#results = get_playlist_tracks(sp, playlist_id)
-
-# * DEBUG STATEMENT *
-#for i in range(0, len(results)):
-#    print(f"{i:>3}: {sorted_res[i]['track']['name']:<60} {sorted_res[i]['added_at']} {sorted_res[i]['track']['album']['name']}")
-    
-#tracks = [track['track']['uri'].split(':')[2] for track in results]
-#sorted_track_uris = [track['track']['uri'].split(':')[2] for track in sorted_res]
 
