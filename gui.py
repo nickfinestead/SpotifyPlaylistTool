@@ -96,6 +96,7 @@ class Gui:
         if self.spotifyInterface.name == "":
             #TODO: Add error message indicating that username isn't set yet
             return
+        time.sleep(2) # Sleep in between frames so that API requests can fetch data in the background
         for frame in self.frame.winfo_children():
             frame.destroy()
         function()
