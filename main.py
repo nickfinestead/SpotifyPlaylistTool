@@ -13,6 +13,7 @@ if __name__ == "__main__":
     else:
         # Call parse_flags() method
         flags = parse_flags(sys.argv) # Will return a dict containing the flags or none if format isn't recognized      
-        if flags == None:
+        if len(flags) == 0:
+            print("ERROR: No supported arguments supplied")
             exit(1)
         execute_flags(flags,si)

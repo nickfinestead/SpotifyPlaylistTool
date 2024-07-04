@@ -11,13 +11,42 @@ import os
 #       Medium      !!
 #       High:       !
 
-#      TODO:
+#      DONE:
 #     !!     Create CLI structure and logic
 #     !!     CMD line parsing, arguments, help option, etc.
 #            Alternatively, add gui
 #     !!!    Implement Other Sorting options( Alphabetic, Alphanumeric, Length of Song, etc.) 
+
+#      TBD:
 #     !!!    Possible cached version of before run to revert changes to playlist
 #            TBD
+
+
+# Comparable to sorting by Date Added
+def sort_dateadded(results):
+    sorted_res = []
+    for _, group in groupby(sorted(results, key = lambda x: x['added_at'], reverse=True), key = lambda x: x['added_at']):
+        sorted_group = sorted(group, key = lambda x: (x['track']['album']['name'], x['track']['name']))
+        sorted_res.extend(sorted_group)
+    return sorted_res
+
+
+# Sorts based on track name, then based on album name
+def sort_alphabetic(results):
+    sorted_res = []
+    for _, group in groupby(sorted(results, key = lambda x: x['track']['name']), key = lambda x: x['track']['name']):
+        sorted_group = sorted(group, key = lambda x: x['track']['album']['name'])
+        sorted_res.extend(sorted_group)
+    return sorted_res
+
+# Sorts by artist name, then track name
+def sort_artist(results):
+    sorted_res = []
+    for _, group in groupby(sorted(results, key = lambda x: x['track']['album']['artists'][0]['name']), key = lambda x: x['track']['album']['artists'][0]['name']):
+        sorted_group = sorted(group, key = lambda x: x['track']['name'])
+        sorted_res.extend(sorted_group)
+    return sorted_res
+
 
 
 class SpotifyInterface:
@@ -97,22 +126,16 @@ class SpotifyInterface:
 
         return tracks
     
-    def sort_tracks(self, results):
-        sorted_res = []
-        for _, group in groupby(sorted(results, key = lambda x: x['added_at'], reverse=True), key = lambda x: x['added_at']):
-            sorted_group = sorted(group, key = lambda x: (x['track']['album']['name'], x['track']['name']))
-            sorted_res.extend(sorted_group)
-        return sorted_res
-    
-    def insert_playlist(self):
+    def insert_playlist(self, sort = sort_dateadded):
         i = 0
         songs = self.get_tracks()
         song_uris = [song['track']['uri'].split(':')[2] for song in songs]
-        sorted_songs = self.sort_tracks(songs)
+        #TODO: Add other sorting methods
+        sorted_songs = sort(songs)
         sorted_songs_uris = [song['track']['uri'].split(':')[2] for song in sorted_songs]
         while sorted_songs_uris:
-            progress = f"{(i/len(song_uris))*100:5.2f}% Done"
-            print(" "*len(progress), end = "\r")
+            progress = f"     {(i/len(song_uris))*100:5.2f}% Done"
+            print(" "*(len(progress)+5) , end = "\r")
             print(progress, end = "\r")
             
             song = sorted_songs_uris.pop(0)
