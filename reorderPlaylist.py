@@ -111,12 +111,19 @@ class SpotifyInterface:
         sorted_songs = self.sort_tracks(songs)
         sorted_songs_uris = [song['track']['uri'].split(':')[2] for song in sorted_songs]
         while sorted_songs_uris:
+            progress = f"{(i/len(song_uris))*100:5.2f}% Done"
+            print(" "*len(progress), end = "\r")
+            print(progress, end = "\r")
             
             song = sorted_songs_uris.pop(0)
             song_start_pos = song_uris.index(song)
             
             #print(f"i: {i}  Start_pos: {song_start_pos} Song URI: {song} Results Song URI: {tracks[song_start_pos]} ")
-            self.sp.playlist_reorder_items(self.playlist_id, range_start=song_start_pos, insert_before=i)
+            try:
+                self.sp.playlist_reorder_items(self.playlist_id, range_start=song_start_pos, insert_before=i)
+            except:
+                print("ERROR: Exception thrown while trying to insert into the selected playlist")
+                break
             song_uris.remove(song)
             song_uris.insert(i,song)
             i = i+1
