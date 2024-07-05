@@ -84,7 +84,6 @@ class Gui:
                     pass
         t = Thread(target = get_playlists)
         t.start()
-        # TODO: Figure out why bug with running sort twice
         def get_key(val, dict):
             for (key, value) in dict.items():
                 if val == value:
