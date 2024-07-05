@@ -143,7 +143,8 @@ class SpotifyInterface:
             
             #print(f"i: {i}  Start_pos: {song_start_pos} Song URI: {song} Results Song URI: {tracks[song_start_pos]} ")
             try:
-                self.sp.playlist_reorder_items(self.playlist_id, range_start=song_start_pos, insert_before=i)
+                if song != song_uris[i]:
+                    self.sp.playlist_reorder_items(self.playlist_id, range_start=song_start_pos, insert_before=i)
             except:
                 print("ERROR: Exception thrown while trying to insert into the selected playlist")
                 break
