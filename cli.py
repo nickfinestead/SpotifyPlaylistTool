@@ -14,23 +14,26 @@ def parse_flags(cmd_args: list) -> Union[dict, None]:
     
     flag_dict = {}
     flag_dict['Sort'] = sort_dateadded
-    for i in range(1, len(cmd_args)):
+    i = 1
+    while i < len(cmd_args):  # TODO: Range object doesn't use current value of i modified inside of for loop, only previous output.
         try:
             if cmd_args[i] == "-pn":
                 flag_dict['Playlist_name'] = cmd_args[i+1]
-                i+=1
+                i+=2
             elif cmd_args[i] == "-pu":
                 flag_dict['Playlist_uri'] = cmd_args[i+1]
-                i+=1
+                i+=2
             elif cmd_args[i] == "-u":
-                    flag_dict['Username'] = cmd_args[i+1]
+                flag_dict['Username'] = cmd_args[i+1]
+                i+=2
             elif cmd_args[i] == "-s":
                 sorts = { "Date": sort_dateadded, "Alphabetic": sort_alphabetic, "Artist": sort_artist}
                 try:
                     flag_dict['Sort'] = sorts[cmd_args[i+1]]
-                    i+=1
-                except:
+                except KeyError:
                     print("ERROR: Unknown Sort option, defaulting to Date Added")
+                finally:
+                    i+=2
             elif cmd_args[i] == "-h":
                 help_string = '''
     To use this utility run the program by using "python main.py ..." 
@@ -43,6 +46,11 @@ def parse_flags(cmd_args: list) -> Union[dict, None]:
                 -s        Sort Method(Date added by default, Alphabetic, or Artist)'''
                 print(help_string)
                 exit(0)
+            else:
+                [print(f"{k}: {v}") for (k,v) in flag_dict.items()]
+                print("\n")
+                print(f"ERROR: option \"{cmd_args[i]}\" is not recognized")
+                exit(1)
         except IndexError:
                 print(f"ERROR: \"{cmd_args[i]}\" Flag cannot be used without value")
                 exit(1)
