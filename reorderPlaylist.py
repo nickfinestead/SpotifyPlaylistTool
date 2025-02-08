@@ -23,7 +23,7 @@ import os
 
 
 # Comparable to sorting by Date Added
-def sort_dateadded(results):
+def date(results):
     sorted_res = []
     for _, group in groupby(sorted(results, key = lambda x: x['added_at'], reverse=True), key = lambda x: x['added_at']):
         sorted_group = sorted(group, key = lambda x: (x['track']['album']['name'], x['track']['name']))
@@ -32,7 +32,7 @@ def sort_dateadded(results):
 
 
 # Sorts based on track name, then based on album name
-def sort_alphabetic(results):
+def alphabetic(results):
     sorted_res = []
     for _, group in groupby(sorted(results, key = lambda x: x['track']['name']), key = lambda x: x['track']['name']):
         sorted_group = sorted(group, key = lambda x: x['track']['album']['name'])
@@ -40,7 +40,7 @@ def sort_alphabetic(results):
     return sorted_res
 
 # Sorts by artist name, then track name
-def sort_artist(results):
+def artist(results):
     sorted_res = []
     for _, group in groupby(sorted(results, key = lambda x: x['track']['album']['artists'][0]['name']), key = lambda x: x['track']['album']['artists'][0]['name']):
         sorted_group = sorted(group, key = lambda x: x['track']['name'])
@@ -58,16 +58,68 @@ class SpotifyInterface:
         # Spotify API credentials
         self.client_id = os.getenv("client_id")
         self.client_secret = os.getenv("client_secret")
-        self.scope = 'playlist-read-private playlist-modify-private'
+        self.scope = 'playlist-read-private playlist-modify-private user-library-read'
         # Authenticate with Spotify
         self.sp = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.client_id,
                                                     client_secret=self.client_secret,
                                                     redirect_uri='http://localhost:8080/',
                                                     scope=self.scope))
         
+        self.liked_songs = self.get_liked_songs()
         # Get the playlist ID of the playlist you want to reorder
         self.playlist_id = ""
         self.name = ""
+        self.allplaylists = dict()
+
+    def diff(self, p1, p2):
+        def get_key(val, dict):
+            # TODO: Determine if faster way to check, could reverse mapping and do Name --> URI, but name could be duplicated. TBD
+            for (key, value) in dict.items():
+                if val == value:
+                    return key
+            return None
+        print(self.allplaylists)
+        playlists = self.get_playlists()
+        p1 = get_key(p1, self.allplaylists)
+        p2 = get_key(p2, self.allplaylists)
+        # TODO: Implement Verbosity
+        if not p1:
+            return
+        if not p2:
+            return
+        playlist1 = [ x['track']['name'] for x in self.get_tracks_byId(p1) ]
+        playlist2 = [ x['track']['name'] for x in self.get_tracks_byId(p2) ]
+        if len(playlist1) >= len (playlist2):
+            for song in playlist1:
+                if song not in playlist2:
+                    print(f"Song \"{song}\" in \"{self.allplaylists[p1]}\", but not in \"{self.allplaylists[p2]}\"")
+        else:
+            for song in playlist2:
+                if song not in playlist1:
+                    print(f"Song \"{song}\" in \"{self.allplaylists[p2]}\", but not in \"{self.allplaylists[p1]}\"")
+
+    def get_tracks_byId(self, id):
+        if id == "":
+            return
+        if id == "Liked Songs":
+            return self.liked_songs
+        offset = 0
+        tracks = []
+    
+        while True:
+            response = self.sp.playlist_tracks(id,
+                                          offset=offset,
+                                          fields='items.track(name,uri,album,),items.added_at,total',
+                                          additional_types=['track'])
+    
+            tracks.extend(response['items'])
+            offset += len(response['items'])
+    
+            if len(response['items']) == 0:
+                break
+    
+        return tracks
+
 
     def set_name(self, name):
         self.name = name
@@ -81,7 +133,6 @@ class SpotifyInterface:
         playlists = []
         return_list = {}
         while True:
-        
             response = self.sp.user_playlists(user=self.name, offset=offset)
             playlists.extend(response['items'])
             offset+=len(response['items'])
@@ -91,9 +142,12 @@ class SpotifyInterface:
             try:
                 if i['owner']['display_name'] == self.name or self.name in i['owner']['uri']:
                     f"{i['name']}"
+                    # TODO: Refactor, this is a dictonary of URI --> Name, Spotify API sends back in annoying format
                     return_list[i['uri'].split(':')[2]] = i['name']
+                self.allplaylists[i['uri'].split(':')[2]] = i['name']
             except:
                     pass
+        return_list['Liked Songs'] = 'Spotify Liked Songs'
         return return_list
 
     # Spotify API limits to 100 tracks per request
@@ -126,7 +180,7 @@ class SpotifyInterface:
 
         return tracks
     
-    def insert_playlist(self, sort = sort_dateadded):
+    def insert_playlist(self, sort = date):
         i = 0
         songs = self.get_tracks()
         song_uris = [song['track']['uri'].split(':')[2] for song in songs]
@@ -153,4 +207,18 @@ class SpotifyInterface:
             i = i+1
         print(f"Finished processing {i} songs, have a nice day.")
 
+    def get_liked_songs(self):
+        offset = 0
+        tracks = []
+
+        while True:
+            response = self.sp.current_user_saved_tracks(
+                                          offset=offset)
+            tracks.extend(response['items'])
+            offset += len(response['items'])
+
+            if len(response['items']) == 0:
+                break
+
+        return tracks
 
